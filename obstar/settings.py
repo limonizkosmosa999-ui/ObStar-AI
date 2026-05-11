@@ -4,6 +4,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+ALLOWED_HOSTS = ['*']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+CSRF_TRUSTED_ORIGINS = ['https://web-production-f29155.up.railway.app']
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-obstar-dev-key-change-in-production')
