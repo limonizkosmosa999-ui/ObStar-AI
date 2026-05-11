@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ALLOWED_HOSTS = ['*']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
 
 CSRF_TRUSTED_ORIGINS = ['https://web-production-f29155.up.railway.app']
 
@@ -13,8 +13,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-obstar-dev-key-change-in-production')
 
-DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
-
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-f29155.up.railway.app',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
@@ -101,3 +106,4 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
