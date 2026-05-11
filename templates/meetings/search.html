@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Search{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Search <span class="highlight">Meetings</span></h1>
+    <p class="page-subtitle">Find meetings by keywords in transcripts and summaries</p>
+</div>
+
+<!-- Search Form -->
+<form method="get" action="{% url 'search' %}" class="search-form" id="search-form">
+    <div class="search-input-wrap">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            placeholder="Search transcripts, summaries, topics..."
+            class="search-input"
+            id="search-input"
+            autofocus
+        >
+    </div>
+</form>
+
+<!-- Results -->
+{% if query %}
+<div class="search-results-count">
+    {% if result_count > 0 %}
+        Found <strong>{{ result_count }}</strong> meeting{{ result_count|pluralize }} matching "{{ query }}"
+    {% else %}
+        No results found for "{{ query }}"
+    {% endif %}
+</div>
+
+{% if results %}
+<div class="cards-grid">
+    {% for meeting in results %}
+    <a href="{% url 'meeting_detail' meeting.id %}" class="card card-clickable" id="search-result-{{ meeting.id }}">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-sm);">
+            <h3 class="card-title" style="margin-bottom: 0;">{{ meeting.title }}</h3>
+            <span class="badge badge-{{ meeting.status }}">{{ meeting.get_status_display }}</span>
+        </div>
+        <span class="card-meta">{{ meeting.project.name }}</span>
+        {% if meeting.has_summary %}
+        <p class="card-description">{{ meeting.short_summary }}</p>
+        {% endif %}
+        <div class="card-footer">
+            <span class="card-meta">{{ meeting.created_at|date:"M d, Y · H:i" }}</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🔍</div>
+    <div class="empty-text">Type a keyword to search across all your meetings</div>
+</div>
+{% endif %}
+{% endblock %}

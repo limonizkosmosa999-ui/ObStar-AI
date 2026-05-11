@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md);">
+        <div>
+            <h1 class="page-title">{{ project.name }}</h1>
+            {% if project.description %}
+            <p class="page-subtitle">{{ project.description }}</p>
+            {% endif %}
+        </div>
+        <div class="flex gap-sm">
+            <a href="{% url 'upload_meeting' %}?project={{ project.id }}" class="btn btn-primary" id="btn-upload-to-project">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload Meeting
+            </a>
+            <form method="post" action="{% url 'delete_project' project.id %}" onsubmit="return confirm('Delete this project and all its meetings?');" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" id="btn-delete-project">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bot Form -->
+<div class="bot-form-card" id="bot-form-section">
+    <div class="panel-header">
+        <span class="panel-icon">🤖</span>
+        Connect Bot to Meeting
+    </div>
+    <div class="panel-body">
+        <form method="post" action="{% url 'add_bot_to_meeting' %}" id="add-bot-form">
+            {% csrf_token %}
+            <input type="hidden" name="project_id" value="{{ project.id }}">
+            <div class="bot-form-row">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <input type="url" name="meeting_url" class="form-control" placeholder="Zoom or Google Meet link..." required id="bot-meeting-url">
+                </div>
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <input type="text" name="title" class="form-control" placeholder="Meeting title" required id="bot-meeting-title">
+                </div>
+                <button type="submit" class="btn btn-primary" id="btn-send-bot">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Send Bot
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Meetings List -->
+{% if meetings %}
+<div class="section-header">
+    <h2 class="section-title">
+        <span class="icon">🎙</span>
+        Meetings ({{ meetings|length }})
+    </h2>
+</div>
+
+<div class="cards-grid">
+    {% for meeting in meetings %}
+    <a href="{% url 'meeting_detail' meeting.id %}" class="card card-clickable" id="meeting-card-{{ meeting.id }}">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-sm);">
+            <h3 class="card-title" style="margin-bottom: 0;">{{ meeting.title }}</h3>
+            <span class="badge badge-{{ meeting.status }}">{{ meeting.get_status_display }}</span>
+        </div>
+        {% if meeting.recall_bot_id and meeting.status == 'processing' %}
+        <div class="bot-processing-indicator">
+            <div class="processing-spinner-sm"></div>
+            <span>Bot is in the meeting, waiting for it to end...</span>
+        </div>
+        {% endif %}
+        {% if meeting.meeting_url %}
+        <span class="card-meta" style="margin-bottom: var(--space-xs);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Live meeting
+        </span>
+        {% endif %}
+        <p class="card-description">{{ meeting.short_summary }}</p>
+        <div class="card-footer">
+            <span class="card-meta">{{ meeting.created_at|date:"M d, Y · H:i" }}</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🎙</div>
+    <div class="empty-text">No meetings in this project yet</div>
+    <a href="{% url 'upload_meeting' %}?project={{ project.id }}" class="btn btn-primary">Upload a meeting</a>
+</div>
+{% endif %}
+
+<!-- Q&A Chat Block -->
+<div class="chat-section" id="project-chat-section" style="margin-top: var(--space-2xl);">
+    <div class="panel-header">
+        <span class="panel-icon">💬</span>
+        Ask about this project
+    </div>
+    <div class="panel-body">
+        <div class="chat-input-row">
+            <input type="text" id="chat-question-input" class="form-control" placeholder="Ask a question about meetings in this project..." autocomplete="off">
+            <button class="btn btn-primary" id="btn-send-question" onclick="sendQuestion()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Ask
+            </button>
+        </div>
+        <div id="chat-answer-block" class="chat-answer-block" style="display: none;">
+            <div class="chat-answer-label">
+                <span>✨</span> AI Answer
+            </div>
+            <div id="chat-answer-text" class="chat-answer-text"></div>
+        </div>
+        <div id="chat-loading" class="chat-loading" style="display: none;">
+            <div class="processing-spinner-sm"></div>
+            <span>Thinking...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const projectId = {{ project.id }};
+const csrftoken = getCookie('csrftoken');
+
+function sendQuestion() {
+    const input = document.getElementById('chat-question-input');
+    const answerBlock = document.getElementById('chat-answer-block');
+    const answerText = document.getElementById('chat-answer-text');
+    const loading = document.getElementById('chat-loading');
+    const btn = document.getElementById('btn-send-question');
+
+    const question = input.value.trim();
+    if (!question) return;
+
+    // Show loading, hide previous answer
+    loading.style.display = 'flex';
+    answerBlock.style.display = 'none';
+    btn.disabled = true;
+
+    fetch(`/projects/${projectId}/chat/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question: question }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        loading.style.display = 'none';
+        answerBlock.style.display = 'block';
+        answerText.innerText = data.answer || data.error || 'No answer received.';
+        btn.disabled = false;
+    })
+    .catch(err => {
+        loading.style.display = 'none';
+        answerBlock.style.display = 'block';
+        answerText.innerText = 'Error: ' + err.message;
+        btn.disabled = false;
+    });
+}
+
+// Allow Enter key to send
+document.getElementById('chat-question-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendQuestion();
+    }
+});
+</script>
+{% endblock %}
+

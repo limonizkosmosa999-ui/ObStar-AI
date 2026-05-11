@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Create Project{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Create <span class="highlight">Project</span></h1>
+    <p class="page-subtitle">Organize your meetings under a project</p>
+</div>
+
+<div class="form-card">
+    <form method="post" id="create-project-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="project-name-input">Project Name</label>
+            {% render_field form.name class="form-control" %}
+            {% if form.name.errors %}
+            <div class="form-error">{{ form.name.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="project-description-input">Description</label>
+            {% render_field form.description class="form-control" %}
+            {% if form.description.errors %}
+            <div class="form-error">{{ form.description.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-project">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create Project
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

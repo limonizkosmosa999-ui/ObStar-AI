@@ -1,0 +1,1 @@
+# ObStar Django project

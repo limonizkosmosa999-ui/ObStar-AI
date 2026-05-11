@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ meeting.title }}{% endblock %}
+
+{% block content %}
+<!-- Meeting Header -->
+<div class="meeting-header">
+    <div>
+        <div class="card-meta mb-sm">
+            <a href="{% url 'project_detail' meeting.project.id %}">{{ meeting.project.name }}</a>
+            <span>·</span>
+            <span>{{ meeting.created_at|date:"M d, Y · H:i" }}</span>
+        </div>
+        <h1 class="page-title">{{ meeting.title }}</h1>
+    </div>
+    <div class="meeting-actions" data-meeting-status data-meeting-id="{{ meeting.id }}" data-meeting-status="{{ meeting.status }}">
+        <span class="badge badge-{{ meeting.status }} status-badge">{{ meeting.get_status_display }}</span>
+        {% if meeting.status == 'failed' or meeting.status == 'completed' %}
+        <form method="post" action="{% url 'reprocess_meeting' meeting.id %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm" id="btn-reprocess">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                Re-process
+            </button>
+        </form>
+        {% endif %}
+        <form method="post" action="{% url 'delete_meeting' meeting.id %}" onsubmit="return confirm('Delete this meeting?');" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm" id="btn-delete-meeting">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Audio Player -->
+{% if meeting.audio_file %}
+<div class="audio-player-wrap">
+    <audio controls preload="metadata" id="audio-player">
+        <source src="{{ meeting.audio_file.url }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+</div>
+{% endif %}
+
+<!-- Processing State -->
+{% if meeting.status == 'pending' or meeting.status == 'processing' %}
+<div class="meeting-panel full-width" style="grid-column: 1 / -1;">
+    <div class="processing-state" data-meeting-status data-meeting-id="{{ meeting.id }}" data-meeting-status="{{ meeting.status }}">
+        <div class="processing-spinner"></div>
+        <div class="processing-text">AI is processing your meeting<span class="progress-dots">...</span></div>
+        <div class="processing-subtext">Transcribing audio and generating structured summary. This may take a minute.</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Failed State -->
+{% if meeting.status == 'failed' %}
+<div class="error-state" style="margin-bottom: var(--space-lg);">
+    <div class="error-icon">⚠</div>
+    <div class="error-message">{{ meeting.error_message|default:"Processing failed. Please try re-processing." }}</div>
+</div>
+{% endif %}
+
+<!-- Completed: Transcript & Summary -->
+{% if meeting.status == 'completed' %}
+<div class="meeting-grid">
+    <!-- Transcript Panel -->
+    <div class="meeting-panel" style="animation-delay: 0.1s;">
+        <div class="panel-header">
+            <span class="panel-icon">📝</span>
+            Transcript
+        </div>
+        <div class="panel-body">
+            {% if meeting.has_transcript %}
+            <div class="transcript-content" id="transcript-content">
+                {% if timestamps %}
+                    {% for segment in timestamps %}
+                    <div class="transcript-segment">
+                        <span class="transcript-time">{{ segment.start|floatformat:0 }}s</span>
+                        <span class="transcript-text">{{ segment.text }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="white-space: pre-wrap; line-height: 1.8;">{{ meeting.transcript.text }}</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p class="text-secondary">No transcript available.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Summary Panel -->
+    <div class="meeting-panel" style="animation-delay: 0.2s;">
+        <div class="panel-header">
+            <span class="panel-icon">✨</span>
+            AI Summary
+        </div>
+        <div class="panel-body">
+            {% if meeting.has_summary %}
+                <!-- Topics -->
+                {% if topics %}
+                <div class="summary-section">
+                    <div class="summary-section-title topics">
+                        <span>📋</span> Topics Discussed
+                    </div>
+                    <ul class="summary-list topics">
+                        {% for topic in topics %}
+                        <li>{{ topic }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Decisions -->
+                {% if decisions %}
+                <div class="summary-section">
+                    <div class="summary-section-title decisions">
+                        <span>✅</span> Decisions Made
+                    </div>
+                    <ul class="summary-list decisions">
+                        {% for decision in decisions %}
+                        <li>{{ decision }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Action Items -->
+                {% if action_items %}
+                <div class="summary-section">
+                    <div class="summary-section-title actions">
+                        <span>🎯</span> Action Items
+                    </div>
+                    <ul class="summary-list actions">
+                        {% for item in action_items %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="empty-state">
+                <p class="text-secondary">No summary available.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

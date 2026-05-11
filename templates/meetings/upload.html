@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Upload Meeting{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Upload <span class="highlight">Meeting</span></h1>
+    <p class="page-subtitle">Upload an audio or video recording to get AI-powered transcription and notes</p>
+</div>
+
+<div class="form-card">
+    <form method="post" enctype="multipart/form-data" id="upload-meeting-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="meeting-project-select">Project</label>
+            {% render_field form.project class="form-control" %}
+            {% if form.project.errors %}
+            <div class="form-error">{{ form.project.errors.0 }}</div>
+            {% endif %}
+            <div style="margin-top: var(--space-sm);">
+                <a href="{% url 'create_project' %}" style="font-size: var(--font-size-sm);">+ Create new project</a>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="meeting-title-input">Meeting Title</label>
+            {% render_field form.title class="form-control" %}
+            {% if form.title.errors %}
+            <div class="form-error">{{ form.title.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label>Audio / Video File</label>
+            <div class="upload-zone" id="upload-zone">
+                {{ form.audio_file }}
+                <span class="upload-zone-icon">🎙</span>
+                <div class="upload-zone-text">Drag & drop your file here, or click to browse</div>
+                <div class="upload-zone-hint">Supports MP3, MP4, WAV, M4A, WebM, OGG, FLAC (max 100MB)</div>
+                <div class="file-name-display" id="file-name-display"></div>
+            </div>
+            {% if form.audio_file.errors %}
+            <div class="form-error">{{ form.audio_file.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-upload">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload & Process
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Welcome to <span class="highlight">ObStar AI</span></h1>
+    <p class="page-subtitle">Your AI-powered meeting intelligence platform</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card" id="stat-projects">
+        <div class="stat-label">Projects</div>
+        <div class="stat-value">{{ total_projects }}</div>
+    </div>
+    <div class="stat-card" id="stat-meetings">
+        <div class="stat-label">Total Meetings</div>
+        <div class="stat-value">{{ total_meetings }}</div>
+    </div>
+    <div class="stat-card" id="stat-completed">
+        <div class="stat-label">Processed</div>
+        <div class="stat-value">{{ completed_meetings }}</div>
+    </div>
+</div>
+
+<!-- Projects Section -->
+<div class="section-header">
+    <h2 class="section-title">
+        <span class="icon">📁</span>
+        Projects
+    </h2>
+    <a href="{% url 'create_project' %}" class="btn btn-primary" id="btn-create-project">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Project
+    </a>
+</div>
+
+{% if projects %}
+<div class="cards-grid">
+    {% for project in projects %}
+    <a href="{% url 'project_detail' project.id %}" class="card card-clickable" id="project-card-{{ project.id }}">
+        <h3 class="card-title">{{ project.name }}</h3>
+        {% if project.description %}
+        <p class="card-description">{{ project.description|truncatewords:15 }}</p>
+        {% endif %}
+        <div class="card-footer">
+            <span class="card-meta">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                {{ project.total_meetings }} meeting{{ project.total_meetings|pluralize }}
+            </span>
+            <span class="card-meta">{{ project.created_at|date:"M d, Y" }}</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📁</div>
+    <div class="empty-text">No projects yet</div>
+    <a href="{% url 'create_project' %}" class="btn btn-primary">Create your first project</a>
+</div>
+{% endif %}
+
+<!-- Recent Meetings -->
+{% if recent_meetings %}
+<div class="section-header mt-lg" style="margin-top: var(--space-2xl);">
+    <h2 class="section-title">
+        <span class="icon">🕐</span>
+        Recent Meetings
+    </h2>
+    <a href="{% url 'upload_meeting' %}" class="btn btn-secondary" id="btn-upload-meeting">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Meeting
+    </a>
+</div>
+
+<div class="cards-grid">
+    {% for meeting in recent_meetings %}
+    <a href="{% url 'meeting_detail' meeting.id %}" class="card card-clickable" id="meeting-card-{{ meeting.id }}">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-sm);">
+            <h3 class="card-title" style="margin-bottom: 0;">{{ meeting.title }}</h3>
+            <span class="badge badge-{{ meeting.status }}">{{ meeting.get_status_display }}</span>
+        </div>
+        <span class="card-meta">{{ meeting.project.name }}</span>
+        <p class="card-description">{{ meeting.short_summary }}</p>
+        <div class="card-footer">
+            <span class="card-meta">{{ meeting.created_at|date:"M d, Y · H:i" }}</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
