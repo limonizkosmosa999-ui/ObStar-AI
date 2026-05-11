@@ -7,7 +7,13 @@ load_dotenv()
 
 
 
-CSRF_TRUSTED_ORIGINS = ['https://web-production-f29155.up.railway.app']
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-f29155.up.railway.app',
+    'https://*.up.railway.app',
+]
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
